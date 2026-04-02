@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Income Tracker{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-semibold mb-2 text-white">Income Tracker</h1>
+    <p class="text-slate-400 text-sm">Log all your income sources and monitor your net balance.</p>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+    <div class="rounded-xl border border-slate-700 bg-slate-800 p-5 shadow-sm">
+        <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Total Income</p>
+        <h2 class="text-2xl font-bold text-emerald-400">₹{{ '%.2f'|format(total_income) }}</h2>
+        <p class="text-slate-500 text-xs mt-1">Across all time</p>
+    </div>
+    <div class="rounded-xl border border-slate-700 bg-slate-800 p-5 shadow-sm">
+        <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Total Expenses</p>
+        <h2 class="text-2xl font-bold text-rose-400">₹{{ '%.2f'|format(total_expense) }}</h2>
+        <p class="text-slate-500 text-xs mt-1">Across all time</p>
+    </div>
+    <div class="rounded-xl border border-slate-700 bg-slate-800 p-5 shadow-sm">
+        <p class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Net Balance</p>
+        <h2 class="text-2xl font-bold {% if net_balance >= 0 %}text-emerald-400{% else %}text-rose-400{% endif %}">
+            ₹{{ '%.2f'|format(net_balance) }}
+        </h2>
+        <p class="text-slate-500 text-xs mt-1">Income minus expenses</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <div class="lg:col-span-1">
+        <section class="rounded-xl border border-emerald-500/30 bg-slate-800 p-6 shadow-sm sticky top-24">
+            <h2 class="text-lg font-bold mb-4 text-emerald-400 border-b border-slate-700 pb-2">Record Income</h2>
+            <form method="post" action="{{ url_for('income') }}" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Description</label>
+                    <input type="text" name="description" required placeholder="e.g. Monthly Salary"
+                           class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2 text-slate-100 focus:border-emerald-500 focus:outline-none transition text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Amount (₹)</label>
+                    <input type="number" name="amount" step="0.01" min="0.01" required placeholder="0.00"
+                           class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2 text-slate-100 focus:border-emerald-500 focus:outline-none transition text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Date</label>
+                    <input type="date" name="date" value="{{ today }}"
+                           class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2 text-slate-100 focus:border-emerald-500 focus:outline-none transition text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Source</label>
+                    <select name="source" class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2 text-slate-100 focus:border-emerald-500 focus:outline-none transition text-sm">
+                        {% for s in income_sources %}
+                        <option value="{{ s }}">{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 text-white font-bold py-2.5 rounded-md hover:bg-emerald-500 transition text-sm mt-2">
+                    Save Income
+                </button>
+            </form>
+        </section>
+    </div>
+
+    <section class="lg:col-span-2 space-y-4">
+        <h2 class="text-lg font-semibold text-slate-300 mb-4">
+            Recent Entries <span class="text-sm font-normal text-slate-500">({{ incomes|length }} records)</span>
+        </h2>
+        
+        <div class="space-y-3">
+        {% if incomes %}
+            {% for i in incomes %}
+            <div class="rounded-xl border border-slate-700 bg-slate-800 p-4 shadow-sm flex items-center justify-between gap-3 group">
+                <div class="min-w-0">
+                    <p class="font-semibold text-white truncate text-sm">{{ i.description }}</p>
+                    <p class="text-xs text-slate-400 mt-1.5 flex items-center gap-2">
+                        <span class="inline-block bg-slate-900 text-slate-300 border border-slate-600 rounded px-2 py-0.5">{{ i.source }}</span>
+                        {{ i.date.strftime('%d %b %Y') }}
+                    </p>
+                </div>
+                <div class="flex items-center gap-4 flex-shrink-0">
+                    <span class="text-emerald-400 font-bold font-mono">₹{{ '%.2f'|format(i.amount) }}</span>
+                    <form method="post" action="{{ url_for('delete_income', id=i.id) }}" class="opacity-0 group-hover:opacity-100 transition-opacity" onsubmit="return confirm('Delete this income entry?')">
+                        <button type="submit" class="text-xs font-medium text-slate-400 hover:text-rose-400 transition">Remove</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="flex flex-col items-center justify-center text-slate-500 border border-dashed border-slate-700 rounded-xl p-10 bg-slate-800/50">
+                <p class="font-medium">No income entries logged.</p>
+            </div>
+        {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}

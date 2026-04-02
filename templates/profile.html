@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Profile Settings{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto">
+    <div class="mb-6">
+        <h1 class="text-3xl font-semibold mb-2 text-white">Profile Settings</h1>
+        <p class="text-slate-400 text-sm">Manage your account details and security credentials.</p>
+    </div>
+
+    <section class="rounded-xl border border-slate-700 bg-slate-800 p-6 shadow-sm">
+        <form method="post" action="{{ url_for('profile') }}" class="space-y-6">
+            
+            <div class="space-y-4">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300 border-b border-slate-700 pb-2">Account Details</h3>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Username</label>
+                    <input type="text" name="username" value="{{ current_user.username }}" required
+                        class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2.5 text-slate-100 focus:border-brand focus:outline-none transition text-sm">
+                </div>
+            </div>
+
+            <div class="space-y-4 pt-2">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-300 border-b border-slate-700 pb-2">Security</h3>
+                <p class="text-xs text-slate-500">Leave fields blank if you wish to keep your current password.</p>
+                
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">New Password</label>
+                    <input type="password" name="new_password" placeholder="Enter new password"
+                        class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2.5 text-slate-100 focus:border-brand focus:outline-none transition text-sm">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-medium text-rose-400 mb-1.5">Current Password</label>
+                    <input type="password" name="current_password" placeholder="Required to authorize changes"
+                        class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2.5 text-slate-100 focus:border-rose-500 focus:outline-none transition text-sm">
+                </div>
+            </div>
+
+            <div class="flex gap-3 pt-4 border-t border-slate-700 mt-6">
+                <button type="submit" class="rounded-md bg-brand text-slate-900 font-bold px-6 py-2 hover:bg-sky-400 transition text-sm">
+                    Update Profile
+                </button>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}
