@@ -5,3 +5,4 @@ Werkzeug
 matplotlib
 WeasyPrint
 gunicorn
+numpy==1.26.4
