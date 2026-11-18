@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Expenses · Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div>
+        <h1 class="text-3xl font-semibold mb-1 text-white">Expense Tracker</h1>
+        <p class="text-slate-400 text-sm">Log your spending, categorize it, and filter past records.</p>
+    </div>
+    <div class="flex gap-3">
+        <a href="{{ url_for('export_csv', start=start_str, end=end_str, category=selected_category) }}" class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-300 hover:bg-slate-700 transition flex items-center gap-2">
+            Export CSV
+        </a>
+        <a href="{{ url_for('export_pdf', start=start_str, end=end_str, category=selected_category) }}" class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-300 hover:bg-slate-700 transition flex items-center gap-2">
+            Export PDF
+        </a>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <div class="lg:col-span-1">
+        <section class="rounded-xl border border-brand/30 bg-slate-800 p-6 shadow-sm sticky top-24">
+            <h2 class="text-lg font-bold mb-4 text-white border-b border-slate-700 pb-2">Add Expense</h2>
+            <form method="post" action="{{ url_for('expense') }}" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Description</label>
+                    <input name="description" required placeholder="e.g. Office Lunch" class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2.5 text-slate-100 focus:border-brand focus:outline-none transition text-sm" />
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1.5">Amount</label>
+                        <input name="amount" type="number" step="0.01" min="0.01" required placeholder="0.00" class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2.5 text-slate-100 focus:border-brand focus:outline-none transition text-sm" />
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1.5">Date</label>
+                        <input name="date" type="date" value="{{ today }}" required class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2.5 text-slate-100 focus:border-brand focus:outline-none transition text-sm" />
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Category</label>
+                    <select name="category" class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2.5 text-slate-100 focus:border-brand focus:outline-none transition text-sm">
+                        <option value="Auto">Auto-Detect (AI)</option>
+                        {% for c in categories %}
+                            <option value="{{ c }}">{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Note <span class="text-slate-600">(optional)</span></label>
+                    <input name="note" placeholder="Additional details..." class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2.5 text-slate-100 focus:border-brand focus:outline-none transition text-sm" />
+                </div>
+                <label class="flex items-center gap-2 cursor-pointer mt-2">
+                    <input type="checkbox" name="is_recurring" value="1" class="w-4 h-4 text-brand bg-slate-900 border-slate-700 rounded focus:ring-brand focus:ring-offset-slate-800">
+                    <span class="text-slate-300 text-sm">Set as a recurring expense</span>
+                </label>
+                <button class="w-full rounded-md bg-brand text-slate-900 font-bold px-4 py-2.5 hover:bg-sky-400 transition mt-2" type="submit">
+                    Save Expense
+                </button>
+            </form>
+        </section>
+    </div>
+
+    <div class="lg:col-span-2 flex flex-col gap-6">
+        
+        <section class="rounded-xl border border-slate-700 bg-slate-800 p-5 shadow-sm">
+            <form method="get" action="{{ url_for('expense') }}" class="flex flex-wrap gap-4 items-end">
+                <div class="flex-1 min-w-[140px]">
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Start Date</label>
+                    <input name="start" value="{{ start_str }}" type="date" class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2 text-slate-200 focus:border-brand focus:outline-none text-sm transition" />
+                </div>
+                <div class="flex-1 min-w-[140px]">
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">End Date</label>
+                    <input name="end" value="{{ end_str }}" type="date" class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2 text-slate-200 focus:border-brand focus:outline-none text-sm transition" />
+                </div>
+                <div class="flex-1 min-w-[160px]">
+                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Category</label>
+                    <select name="category" class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2 text-slate-200 focus:border-brand focus:outline-none text-sm transition">
+                        <option value="">All Categories</option>
+                        {% for c in categories %}
+                            <option value="{{ c }}" {% if selected_category == c %} selected {% endif %}>{{ c }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex gap-2 min-w-[140px]">
+                    <button type="submit" class="bg-brand text-slate-900 font-semibold px-4 py-2 rounded-md hover:bg-sky-400 transition text-sm flex-1">Apply Filters</button>
+                    <a href="{{ url_for('expense') }}" class="text-center bg-slate-700 text-slate-200 px-4 py-2 rounded-md hover:bg-slate-600 transition text-sm">Clear</a>
+                </div>
+            </form>
+        </section>
+
+        <section class="rounded-xl border border-slate-700 bg-slate-800 overflow-hidden shadow-sm">
+            <div class="px-5 py-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/50">
+                <h2 class="text-sm font-semibold text-white uppercase tracking-wide">Expense Records</h2>
+                <span class="text-xs font-mono text-emerald-400 bg-emerald-400/10 px-3 py-1 rounded-full border border-emerald-400/20">Total Filtered: ₹{{ '%.2f'|format(filter_total) }}</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm">
+                    <thead class="bg-slate-900/50 text-slate-400 font-medium border-b border-slate-700">
+                        <tr>
+                            <th class="text-left px-5 py-3">Date</th>
+                            <th class="text-left px-5 py-3">Details</th>
+                            <th class="text-left px-5 py-3">Category</th>
+                            <th class="text-right px-5 py-3">Amount</th>
+                            <th class="px-5 py-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700/50">
+                        {% for e in expenses %}
+                        <tr class="hover:bg-slate-700/30 transition group">
+                            <td class="px-5 py-4 whitespace-nowrap text-slate-300">{{ e.date }}</td>
+                            <td class="px-5 py-4 text-slate-200">
+                                <div class="font-medium flex items-center gap-2">
+                                    {{ e.description }}
+                                    {% if e.is_recurring %}
+                                        <span class="text-[10px] uppercase tracking-wider font-bold text-brand bg-brand/10 border border-brand/20 px-1.5 py-0.5 rounded">Recurring</span>
+                                    {% endif %}
+                                </div>
+                                {% if e.note %}<p class="text-xs text-slate-500 mt-1">{{ e.note }}</p>{% endif %}
+                            </td>
+                            <td class="px-5 py-4">
+                                <span class="inline-flex items-center rounded-md bg-slate-900 px-2.5 py-1 text-xs font-medium text-slate-300 border border-slate-700">{{ e.category }}</span>
+                            </td>
+                            <td class="px-5 py-4 text-right font-mono text-white font-medium">₹{{ '%.2f'|format(e.amount) }}</td>
+                            <td class="px-5 py-4 text-right whitespace-nowrap">
+                                <div class="inline-flex gap-3 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <a class="text-sky-400 hover:text-sky-300 text-xs font-medium" href="{{ url_for('edit', id=e.id) }}">Edit</a>
+                                    <form method="post" action="{{ url_for('delete', id=e.id) }}" onsubmit="return confirm('Delete this expense?');" class="inline">
+                                        <button class="text-rose-400 hover:text-rose-300 text-xs font-medium">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="px-5 py-12 text-center text-slate-500">No expenses found matching your criteria.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </div>
+</div>
+{% endblock %}

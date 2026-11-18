@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Savings Goals{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-semibold mb-2 text-white">Savings Goals</h1>
+    <p class="text-slate-400 text-sm">Set financial targets and track your progress.</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <section class="lg:col-span-1 rounded-xl border border-slate-700 bg-slate-800 p-6 h-fit shadow-sm">
+        <h2 class="text-lg font-bold mb-4 text-brand border-b border-slate-700 pb-2">Create Target</h2>
+        <form method="post" action="{{ url_for('goals') }}" class="space-y-4">
+            <input type="hidden" name="action" value="add">
+            <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1.5">Goal Title</label>
+                <input type="text" name="title" required placeholder="e.g. Emergency Fund" class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2 text-slate-100 focus:border-brand focus:outline-none transition text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1.5">Target Amount (₹)</label>
+                <input type="number" name="target" step="0.01" min="1" required placeholder="50000" class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2 text-slate-100 focus:border-brand focus:outline-none transition text-sm">
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1.5">Deadline <span class="text-slate-500">(Optional)</span></label>
+                <input type="date" name="deadline" min="{{ today }}" class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2 text-slate-100 focus:border-brand focus:outline-none transition text-sm">
+            </div>
+            <button type="submit" class="w-full bg-brand text-slate-900 font-bold py-2.5 rounded-md hover:bg-sky-400 transition text-sm mt-2">Add Goal</button>
+        </form>
+    </section>
+
+    <section class="lg:col-span-2 space-y-4">
+        <h2 class="text-lg font-semibold text-slate-300 mb-4">Active Goals <span class="text-sm font-normal text-slate-500">({{ goals|length }})</span></h2>
+        {% if goals %}
+            {% for g in goals %}
+            <div class="rounded-xl border border-slate-700 bg-slate-800 p-5 shadow-sm">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h3 class="font-bold text-lg text-white">{{ g.title }}</h3>
+                        <p class="text-xs text-slate-400 mt-1">
+                            ₹{{ '%.0f'|format(g.saved) }} of ₹{{ '%.0f'|format(g.target) }}
+                            {% if g.deadline %} <span class="text-slate-600 mx-1">|</span> Due {{ g.deadline.strftime('%d %b %Y') }} {% endif %}
+                        </p>
+                    </div>
+                    <form method="post" action="{{ url_for('goals') }}" onsubmit="return confirm('Delete goal: {{ g.title }}?')">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="goal_id" value="{{ g.id }}">
+                        <button type="submit" class="text-xs text-slate-400 hover:text-rose-400 font-medium transition">Remove</button>
+                    </form>
+                </div>
+
+                <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden border border-slate-700/50 mb-3">
+                    <div class="h-full rounded-full transition-all duration-700 ease-out {% if g.percent >= 100 %}bg-emerald-400{% elif g.percent >= 50 %}bg-brand{% else %}bg-yellow-400{% endif %}" style="width: {{ g.percent }}%"></div>
+                </div>
+
+                <div class="flex justify-between items-center mb-4 text-xs">
+                    <span class="text-slate-400">₹{{ '%.0f'|format(g.remaining) }} remaining</span>
+                    <span class="font-bold {% if g.percent >= 100 %}text-emerald-400{% else %}text-brand{% endif %}">
+                        {{ g.percent }}% {% if g.percent >= 100 %} (Achieved){% endif %}
+                    </span>
+                </div>
+
+                {% if g.percent < 100 %}
+                <form method="post" action="{{ url_for('goals') }}" class="flex gap-3 bg-slate-900/50 p-3 rounded-lg border border-slate-700">
+                    <input type="hidden" name="action" value="deposit">
+                    <input type="hidden" name="goal_id" value="{{ g.id }}">
+                    <input type="number" name="deposit_amount" step="0.01" min="0.01" placeholder="Add funds (₹)" required class="flex-1 rounded-md bg-slate-800 border border-slate-600 px-3 py-1.5 text-sm text-slate-100 focus:border-brand focus:outline-none transition">
+                    <button type="submit" class="px-4 py-1.5 bg-slate-700 text-white rounded-md text-sm hover:bg-slate-600 transition font-medium">Deposit</button>
+                </form>
+                {% else %}
+                <div class="px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 text-sm font-semibold flex justify-center items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Goal Achieved!
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="flex flex-col items-center justify-center text-slate-500 border border-dashed border-slate-700 rounded-xl p-10 bg-slate-800/50">
+                <p class="font-medium">No savings goals created.</p>
+            </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

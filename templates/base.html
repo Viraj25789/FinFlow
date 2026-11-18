@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-900">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <title>{% block title %}Expense Tracker{% endblock %}</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: { extend: { colors: { brand: { DEFAULT: "#38bdf8" } } } },
+      };
+    </script>
+
+    <style>
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.5) sepia(0.1) saturate(0) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+            cursor: pointer;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="flex flex-col min-h-full text-slate-200 font-sans antialiased selection:bg-brand/30 pb-24 md:pb-0">
+
+    <header class="hidden md:block border-b border-slate-700 bg-slate-800/90 backdrop-blur sticky top-0 z-50">
+        <div class="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
+            <a href="{{ url_for('index') }}" class="text-xl font-bold tracking-tight hover:opacity-80 transition flex items-center gap-2">
+                <svg class="w-6 h-6 text-brand" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                <span><span class="text-brand">Expense</span>Tracker</span>
+            </a>
+            
+            <nav class="flex gap-5 text-sm font-medium text-slate-400 items-center">
+                {% if current_user.is_authenticated %}
+                    <span class="text-slate-500 mr-4">User: <span class="text-slate-200">{{ current_user.username }}</span></span>
+                    <a href="{{ url_for('index') }}" class="hover:text-brand transition">Dashboard</a>
+                    <a href="{{ url_for('expense') }}" class="hover:text-brand transition">Expenses</a> 
+                    <a href="{{ url_for('income') }}" class="hover:text-emerald-400 transition">Income</a>
+                    <a href="{{ url_for('budget') }}" class="hover:text-brand transition">Budget</a>
+                    <a href="{{ url_for('goals') }}" class="hover:text-brand transition">Goals</a>
+                    <a href="{{ url_for('profile') }}" class="hover:text-brand transition">Profile</a>
+                    {% if current_user.username == 'admin' %}
+                    <a href="{{ url_for('admin_panel') }}" class="hover:text-rose-400 transition font-bold">Admin</a>
+                    {% endif %}
+                    <a href="{{ url_for('logout') }}" class="text-slate-300 hover:text-white transition ml-4 px-4 py-1.5 border border-slate-600 rounded-md hover:bg-slate-700">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="text-slate-300 hover:text-white transition">Log In</a>
+                    <a href="{{ url_for('register') }}" class="bg-brand text-slate-900 px-4 py-1.5 rounded-md font-bold hover:bg-sky-400 transition">Register</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main class="flex-grow mx-auto w-full max-w-7xl px-4 py-8">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-6 space-y-3">
+                    {% for category, message in messages %}
+                        <div class="rounded-lg px-4 py-3 text-sm border flex items-center gap-3 shadow-sm
+                            {% if category == 'success' %} bg-emerald-500/10 text-emerald-400 border-emerald-500/20 
+                            {% elif category == 'error' %} bg-rose-500/10 text-rose-400 border-rose-500/20 
+                            {% else %} bg-slate-800 text-slate-300 border-slate-700 {% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    {% if current_user.is_authenticated %}
+    <nav class="md:hidden fixed bottom-0 left-0 z-50 w-full h-16 bg-slate-800 border-t border-slate-700 flex justify-around items-center px-1 pb-safe">
+        <a href="{{ url_for('index') }}" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-brand">
+            <span class="text-xs font-medium mt-1">Home</span>
+        </a>
+        <a href="{{ url_for('expense') }}" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-brand">
+            <span class="text-xs font-medium mt-1">Expenses</span>
+        </a>
+        <a href="{{ url_for('income') }}" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-emerald-400">
+            <span class="text-xs font-medium mt-1">Income</span>
+        </a>
+        <a href="{{ url_for('budget') }}" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-brand">
+            <span class="text-xs font-medium mt-1">Budget</span>
+        </a>
+        <a href="{{ url_for('goals') }}" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-brand">
+            <span class="text-xs font-medium mt-1">Goals</span>
+        </a>
+        <a href="{{ url_for('profile') }}" class="flex flex-col items-center justify-center w-full h-full text-slate-400 hover:text-brand">
+            <span class="text-xs font-medium mt-1">Profile</span>
+        </a>
+    </nav>
+    {% endif %}
+</body>
+</html>

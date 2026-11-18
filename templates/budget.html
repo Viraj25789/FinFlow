@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Budget Planner{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-semibold mb-2 text-white">Monthly Budgets</h1>
+    <p class="text-slate-400 text-sm">Configure spending limits for your categories and track your usage.</p>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <section class="lg:col-span-1 rounded-xl border border-slate-700 bg-slate-800 p-6 h-fit shadow-sm">
+        <h2 class="text-lg font-bold mb-4 text-brand border-b border-slate-700 pb-2">Set Budget Limit</h2>
+        <form method="post" action="{{ url_for('budget') }}" id="budgetForm" class="space-y-4">
+            <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1.5">Category</label>
+                <select name="category" id="categoryInput" class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2 text-slate-100 focus:border-brand focus:outline-none transition text-sm">
+                    {% for c in categories %}
+                    <option value="{{ c }}">{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-slate-400 mb-1.5">Monthly Limit (₹)</label>
+                <input type="number" name="limit" id="limitInput" placeholder="e.g. 5000" required min="1" step="0.01" class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2 text-slate-100 focus:border-brand focus:outline-none transition text-sm">
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="submit" class="flex-1 bg-brand text-slate-900 font-bold py-2 rounded-md hover:bg-sky-400 transition text-sm">Save Budget</button>
+                <button type="button" onclick="document.getElementById('budgetForm').reset()" class="px-4 py-2 border border-slate-600 bg-slate-700 rounded-md text-slate-200 hover:bg-slate-600 transition text-sm">Reset</button>
+            </div>
+        </form>
+    </section>
+
+    <section class="lg:col-span-2 space-y-4">
+        <h2 class="text-lg font-semibold text-slate-300 mb-4">Active Budgets</h2>
+        {% if budget_data %}
+            {% for b in budget_data %}
+            <div class="rounded-xl border border-slate-700 bg-slate-800 p-5 shadow-sm group">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h3 class="font-bold text-lg text-white">{{ b.category }}</h3>
+                        <p class="text-xs text-slate-400 mt-1">
+                            Spent: <span class="text-white font-mono font-medium">₹{{ '%.0f'|format(b.spent) }}</span> 
+                            out of <span class="text-slate-300 font-mono">₹{{ '%.0f'|format(b.limit) }}</span>
+                        </p>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="editBudget('{{ b.category }}', '{{ b.limit }}')" class="text-slate-400 hover:text-brand text-sm font-medium transition">Edit</button>
+                        <form method="post" action="{{ url_for('delete_budget', id=b.id) }}" onsubmit="return confirm('Delete budget for {{ b.category }}?')">
+                            <button class="text-slate-400 hover:text-rose-400 text-sm font-medium transition">Delete</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden border border-slate-700/50 mb-2">
+                    <div class="h-full rounded-full transition-all duration-1000 ease-out {% if b.is_over %} bg-rose-500 {% elif b.percent > 75 %} bg-yellow-400 {% else %} bg-emerald-400 {% endif %}" style="width: {{ b.width }}%"></div>
+                </div>
+
+                <div class="flex justify-between items-center text-xs">
+                    {% if b.is_over %}
+                        <span class="text-rose-400 font-bold">Exceeded by {{ b.percent - 100 }}%</span>
+                    {% else %}
+                        <span class="text-slate-400">{{ 100 - b.percent }}% remaining</span>
+                    {% endif %}
+                    <span class="font-bold {% if b.is_over %} text-rose-500 {% else %} text-emerald-500 {% endif %}">{{ b.percent }}% Used</span>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="flex flex-col items-center justify-center text-slate-500 border border-dashed border-slate-700 rounded-xl p-10 bg-slate-800/50">
+                <p class="font-medium">No budgets defined.</p>
+                <p class="text-sm mt-1">Use the form to set up your first monthly limit.</p>
+            </div>
+        {% endif %}
+    </section>
+</div>
+
+<script>
+    function editBudget(category, limit) {
+        document.getElementById('categoryInput').value = category;
+        document.getElementById('limitInput').value = limit;
+        document.getElementById('limitInput').focus();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+</script>
+{% endblock %}

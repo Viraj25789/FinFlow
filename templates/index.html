@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Expense Tracker{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-semibold mb-1 text-white">Financial Dashboard</h1>
+    <p class="text-slate-400 text-sm">Track spending, manage budgets, and visualize your financial health.</p>
+</div>
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    
+    <div class="rounded-xl border border-slate-700 bg-slate-800 p-5 shadow-sm">
+        <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2">This Month's Total Expenses</p>
+        <h2 class="text-2xl font-bold text-white">₹{{ "{:,.0f}".format(this_month_sum) }}</h2>
+        <p class="text-xs mt-2 {{ diff_color }} font-medium">{{ diff_message }}</p>
+        <p class="text-slate-500 text-[11px] mt-1">Predicted Month End: <span class="text-sky-400">₹{{ prediction_msg }}</span></p>
+    </div>
+
+    <div class="rounded-xl border border-slate-700 bg-slate-800 p-5 shadow-sm">
+        <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2">This Month's Total Income</p>
+        <h2 class="text-2xl font-bold text-emerald-400">₹{{ "{:,.0f}".format(this_month_income) }}</h2>
+        <a href="{{ url_for('income') }}" class="text-[11px] text-slate-400 hover:text-emerald-400 mt-2 block transition font-medium">View income records &rarr;</a>
+    </div>
+
+    <div class="rounded-xl border border-slate-700 bg-slate-800 p-5 shadow-sm">
+        <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2">This Month's Net</p>
+        <h2 class="text-2xl font-bold {% if net_balance >= 0 %}text-emerald-400{% else %}text-rose-400{% endif %}">₹{{ "{:,.2f}".format(net_balance) }}</h2>
+        <p class="text-slate-500 text-[11px] mt-2 font-medium">Income vs Expenses (This Month)</p>
+    </div>
+
+    <div class="rounded-xl border border-slate-700 bg-slate-800 p-5 shadow-sm">
+        <p class="text-slate-400 text-[11px] font-bold uppercase tracking-wider mb-2">Active Recurring</p>
+        <h2 class="text-2xl font-bold text-brand">{{ recurring_count }}</h2>
+        <p class="text-slate-500 text-[11px] mt-2 font-medium">Fixed monthly costs</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+    
+    <section class="lg:col-span-2 flex flex-col gap-6">
+        
+        <div class="rounded-xl border border-slate-700 bg-slate-800 p-5 shadow-sm">
+            <h3 class="font-semibold mb-4 text-slate-200 text-sm border-b border-slate-700 pb-2">This Month's Daily Trend</h3>
+            <div class="h-64"><canvas id="dayChart"></canvas></div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="rounded-xl border border-slate-700 bg-slate-800 p-5 shadow-sm">
+                <h3 class="font-semibold mb-4 text-slate-200 text-sm border-b border-slate-700 pb-2">Expense Categories</h3>
+                <div class="h-64 flex justify-center"><canvas id="catChart"></canvas></div>
+            </div>
+            <div class="rounded-xl border border-slate-700 bg-slate-800 p-5 shadow-sm">
+                <h3 class="font-semibold mb-4 text-slate-200 text-sm border-b border-slate-700 pb-2">Income Sources</h3>
+                <div class="h-64 flex justify-center"><canvas id="incSrcChart"></canvas></div>
+            </div>
+        </div>
+
+    </section>
+
+    <aside class="flex flex-col gap-6">
+        <div class="rounded-xl border border-slate-700 bg-slate-800 p-5 shadow-sm">
+            <div class="flex justify-between items-center border-b border-slate-700 pb-2 mb-4">
+                <h3 class="font-semibold text-slate-200 text-sm">Recent Expenses</h3>
+                <a href="{{ url_for('expense') }}" class="text-xs text-brand hover:text-sky-300">View All</a>
+            </div>
+            
+            <div class="space-y-4">
+                {% for e in recent_expenses %}
+                <div class="flex justify-between items-center">
+                    <div class="min-w-0">
+                        <p class="font-medium text-white text-sm truncate">{{ e.description }}</p>
+                        <p class="text-xs text-slate-400 mt-0.5">{{ e.date.strftime('%d %b') }} &middot; {{ e.category }}</p>
+                    </div>
+                    <span class="text-white font-mono text-sm font-medium">₹{{ '%.2f'|format(e.amount) }}</span>
+                </div>
+                {% else %}
+                <p class="text-sm text-slate-500 text-center py-4">No recent expenses.</p>
+                {% endfor %}
+            </div>
+            
+            <a href="{{ url_for('expense') }}" class="mt-6 block w-full text-center bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium py-2 rounded-md transition border border-slate-600">
+                + Add Expense
+            </a>
+        </div>
+    </aside>
+</div>
+
+<script>
+    const catLabels = {{ cat_labels | tojson }};
+    const catValues = {{ cat_values | tojson }};
+    
+    // Updated Trend Data
+    const dayLabels = {{ day_labels | tojson }};
+    const dayExpValues = {{ day_exp_values | tojson }};
+    const dayIncValues = {{ day_inc_values | tojson }};
+    
+    const incSrcLabels = {{ inc_src_labels | tojson }};
+    const incSrcValues = {{ inc_src_values | tojson }};
+
+    const commonOptions = { 
+        responsive: true, 
+        maintainAspectRatio: false, 
+        plugins: { legend: { labels: { color: '#94a3b8', padding: 10, font: {size: 11} } } } 
+    };
+
+    // Expense Doughnut Chart
+    if (document.getElementById('catChart') && catLabels.length > 0) {
+        new Chart(document.getElementById('catChart'), { 
+            type: 'doughnut', 
+            data: { labels: catLabels, datasets: [{ data: catValues, backgroundColor: ['#38bdf8', '#818cf8', '#34d399', '#f472b6', '#fbbf24', '#94a3b8'], borderWidth: 0 }] }, 
+            options: { ...commonOptions, cutout: '70%' } 
+        });
+    }
+
+    // Income Doughnut Chart
+    if (document.getElementById('incSrcChart') && incSrcLabels.length > 0) {
+        new Chart(document.getElementById('incSrcChart'), { 
+            type: 'doughnut', 
+            data: { labels: incSrcLabels, datasets: [{ data: incSrcValues, backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ef4444', '#64748b'], borderWidth: 0 }] }, 
+            options: { ...commonOptions, cutout: '70%' } 
+        });
+    }
+
+    // Dual Bar Chart (Income vs Expense)
+    if (document.getElementById('dayChart') && dayLabels.length > 0) {
+        new Chart(document.getElementById('dayChart'), { 
+            type: 'bar', 
+            data: { 
+                labels: dayLabels, 
+                datasets: [
+                    { 
+                        label: 'Income', 
+                        data: dayIncValues, 
+                        backgroundColor: '#34d399', // Emerald color
+                        borderRadius: 3 
+                    },
+                    { 
+                        label: 'Spending', 
+                        data: dayExpValues, 
+                        backgroundColor: '#f43f5e', // Rose color
+                        borderRadius: 3 
+                    }
+                ] 
+            }, 
+            options: { 
+                ...commonOptions, 
+                scales: { 
+                    x: { display: false }, 
+                    y: { 
+                        grid: { color: '#334155' }, 
+                        border: { dash: [4, 4] }, 
+                        ticks: { color: '#94a3b8', font: {size: 10} } 
+                    } 
+                } 
+            } 
+        });
+    }
+</script>
+{% endblock %}

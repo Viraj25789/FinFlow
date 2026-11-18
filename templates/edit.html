@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Edit Expense{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto">
+  <div class="mb-6">
+    <h1 class="text-3xl font-semibold mb-2 text-white">Edit Expense</h1>
+    <p class="text-slate-400 text-sm">Update the details of your transaction.</p>
+  </div>
+
+  <section class="rounded-xl border border-slate-700 bg-slate-800 p-6 shadow-sm">
+    <form method="post" class="space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-slate-400 mb-1.5">Description</label>
+        <input name="description" value="{{ expense.description }}" required
+               class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2.5 text-slate-100 focus:border-brand focus:outline-none transition text-sm" />
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Amount (₹)</label>
+          <input type="number" step="0.01" min="0.01" name="amount" required value="{{ '%.2f'|format(expense.amount) }}"
+                 class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2.5 text-slate-100 focus:border-brand focus:outline-none transition text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Date</label>
+          <input type="date" name="date" required value="{{ expense.date.strftime('%Y-%m-%d') }}"
+                 class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2.5 text-slate-100 focus:border-brand focus:outline-none transition text-sm" />
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-slate-400 mb-1.5">Category</label>
+        <select name="category" class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2.5 text-slate-100 focus:border-brand focus:outline-none transition text-sm">
+          {% for c in categories %}
+            <option value="{{ c }}" {% if expense.category == c %}selected{% endif %}>{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-slate-400 mb-1.5">Note <span class="text-slate-500">(Optional)</span></label>
+        <input name="note" value="{{ expense.note or '' }}" placeholder="Additional details..."
+               class="w-full rounded-md bg-slate-900 border border-slate-700 px-3 py-2.5 text-slate-100 focus:border-brand focus:outline-none transition text-sm" />
+      </div>
+
+      <label class="flex items-center gap-2 cursor-pointer pt-2">
+        <input type="checkbox" name="is_recurring" value="1" {% if expense.is_recurring %}checked{% endif %} class="w-4 h-4 text-brand bg-slate-900 border-slate-700 rounded focus:ring-brand focus:ring-offset-slate-800">
+        <span class="text-slate-300 text-sm">Set as recurring expense</span>
+      </label>
+
+      <div class="flex gap-3 pt-4 border-t border-slate-700">
+        <button class="flex-1 rounded-md bg-brand text-slate-900 font-bold px-4 py-2 hover:bg-sky-400 transition text-sm" type="submit">Save Changes</button>
+        <a class="flex-1 rounded-md bg-slate-700 text-white font-medium px-4 py-2 hover:bg-slate-600 transition text-sm text-center" href="{{ url_for('index') }}">Cancel</a>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}
