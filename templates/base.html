@@ -43,7 +43,7 @@
                     <a href="{{ url_for('budget') }}" class="hover:text-brand transition">Budget</a>
                     <a href="{{ url_for('goals') }}" class="hover:text-brand transition">Goals</a>
                     <a href="{{ url_for('profile') }}" class="hover:text-brand transition">Profile</a>
-                    {% if current_user.username == 'admin' %}
+                    {% if current_user.is_admin %}
                     <a href="{{ url_for('admin_panel') }}" class="hover:text-rose-400 transition font-bold">Admin</a>
                     {% endif %}
                     <a href="{{ url_for('logout') }}" class="text-slate-300 hover:text-white transition ml-4 px-4 py-1.5 border border-slate-600 rounded-md hover:bg-slate-700">Logout</a>
