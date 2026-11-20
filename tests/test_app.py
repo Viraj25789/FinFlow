@@ -13,7 +13,7 @@ class FinFlowHelperTests(unittest.TestCase):
         self.assertIsNone(parse_date(""))
 
     def test_keyword_categorization(self):
-        self.assertEqual(ai_categorize("Monthly grocery shopping"), "Food")
+        self.assertEqual(ai_categorize("Monthly groceries shopping"), "Food")
         self.assertEqual(ai_categorize("Petrol refill"), "Transport")
         self.assertEqual(ai_categorize("Unrecognized purchase"), "Other")
 
