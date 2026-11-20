@@ -27,7 +27,14 @@ if not os.path.exists(instance_path):
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(instance_path, 'expenses.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'change-this-secret-key-for-production'
+# Set SECRET_KEY in the deployment environment. A temporary random key keeps
+# local development usable without shipping a predictable signing secret.
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or os.urandom(32)
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get(
+    'SESSION_COOKIE_SECURE', 'false'
+).lower() == 'true'
 
 db = SQLAlchemy(app)
 
